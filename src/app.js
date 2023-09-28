@@ -1,7 +1,12 @@
+import 'dotenv/config';
 import express from "express";
 import multer from "multer";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
+import cookieParser from 'cookie-parser';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
+
 
 import path from 'path';
 import { __dirname } from "./path.js";
@@ -9,22 +14,21 @@ import { engine } from "express-handlebars";
 
 
 import { ProductsManager } from "./controllers/productsManager.js";
-import { Products } from "./models/products.js";
+import { Products } from "./models/localProducts.models.js";
 
 const productManager = new ProductsManager();
-
 
 import { messageModel } from "./models/messages.models.js";
 
 
 //rutas productos
-import prodsRouter from "./routes/products.routes.js";
+import prodsRouter from "./routes/localProducts.routes.js";
 
 //rutas cart
-import cartRouter from "./routes/cart.routes.js";
+import cartRouter from "./routes/localCart.routes.js";
 import userRouter from "./routes/users.routes.js";
-import productRouter from "./routes/products.models.routes.js";
-import cartModelsRouter from "./routes/cart.models.routes.js";
+import productRouter from "./routes/products.routes.js";
+import cartModelsRouter from "./routes/cart.routes.js";
 
 //models
 
@@ -39,6 +43,15 @@ const app = express();
 //variable para enviar userEmail por socket.
 let userEmail;
 
+//verifico si un usuario es admin o no.
+
+const auth = (req, res, next) => {
+    if(req.session.email == 'admin@admin.com' && req.session.password == '1234'){
+        return next(); //continua con la siguiente ejecucion
+    } else {
+        res.send('no tienes acceso a esta ruta');
+    }
+}
 
 //config multer
 const storage = multer.diskStorage({
@@ -50,12 +63,38 @@ const storage = multer.diskStorage({
     }
 });
 
+
+//SERVER
 const server = app.listen(PORT, () => {
     console.log(`server on port ${PORT}`);
 });
 
 
+//BDD: conectando mongoDB atlas con visual studio code.
+mongoose.connect(process.env.MONGO_URL)
+.then( async () => {
+    console.log('DB is connected');
+    
+}).catch(() => console.log('error en conexion a DB'));
+
+//Middleware
+
 app.use(express.json());
+app.use(cookieParser(process.env.SIGNED_COOKIE));
+app.use(session({
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URL,
+        mongoOptions: {
+            useNewUrlParser:true, useUnifiedTopology:true
+        },
+        ttl:60
+    }),
+    secret: process.env.SESSION_SECRET,
+    //fuerzo a que se intente guardar a pesar de no tener modificaciones en los datos
+    resave: true,
+    //fuerzo a guardar la session a pesar de no tener ningun dato, al menos el id
+    saveUninitialized: true
+}))
 app.use(express.urlencoded({ extended: true }));
 
 app.engine('handlebars', engine());
@@ -66,16 +105,6 @@ const upload = multer({ storage: storage });
 
 //aqui se deben concatenar las rutas.
 app.use('/static', express.static(path.join(__dirname, '/public')));
-
-//conectando mongoDB atlas con visual studio code.
-mongoose.connect('mongodb+srv://andresrogesu:Lour1618@cluster0.lwz3su9.mongodb.net/?retryWrites=true&w=majority')
-.then( async () => {
-    console.log('DB is connected');
-    
-    // const resultado = await userModel.paginate();
-    // console.log(resultado);
-
-}).catch(() => console.log('error en conexion a DB'));
 
 
 //server socket.io
@@ -134,7 +163,28 @@ app.use('/api/prods', productRouter);
 //routes carts con mongo
 app.use('/api/cartsModels', cartModelsRouter);
 
+//routes de cookies
+app.get('/setCookie', (req, res) => {
+    res.cookie('CookieCookie', 'Hola mundo', {maxAge: 50000, signed: true}).send('cookie generada');
+});
 
+app.get('/getCookie', (req, res) => {
+    res.send(req.signedCookies); //traeme solamente las cookies firmadas
+})
+
+
+//routes de loggin
+
+app.get('/login', (req, res) => {
+    const {email, password} = req.body;
+    req.session.email = email;
+    req.session.password = password;
+
+    res.send(`Usuario ${email} logueado`);
+})
+
+
+//ruta para mostrar views de handblebars
 app.get('/static', async (req, res) => {
 
     const messages = JSON.stringify(await messageModel.find(), null, 4);
@@ -145,7 +195,7 @@ app.get('/static', async (req, res) => {
         js: 'main.js',
         user: userEmail,
         messagesView: messages
-    })
+    }) 
 })
 
 
@@ -153,6 +203,3 @@ app.get('/static', async (req, res) => {
 app.post('/upload', upload.single('product'), (req, res) => {
     res.status(200).send('imagen cargada');
 })
-
-
-
