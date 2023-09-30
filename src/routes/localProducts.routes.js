@@ -13,10 +13,10 @@ async function addProduct(prod) {
 }
 
 
-const prodsRouter = Router();
+const localProductsRouter = Router();
 
 
-prodsRouter.get('/', async (req, res) => {
+localProductsRouter.get('/', async (req, res) => {
     try {
         const products = await productManager.getProducts();
         const { limit } = req.query;
@@ -33,7 +33,7 @@ prodsRouter.get('/', async (req, res) => {
 
 
 
-prodsRouter.get('/:id', async (req, res) => {
+localProductsRouter.get('/:id', async (req, res) => {
     try {
         const {id} = req.params;
         console.log(id);
@@ -50,7 +50,7 @@ prodsRouter.get('/:id', async (req, res) => {
 });
 
 
-prodsRouter.post('/', async (req, res) => {
+localProductsRouter.post('/', async (req, res) => {
     try {
         const products = await productManager.getProducts();
         const prod = products.find((product) => product.code === req.body.code);
@@ -67,7 +67,7 @@ prodsRouter.post('/', async (req, res) => {
 });
 
 
-prodsRouter.delete('/:id', async (req, res) => {
+localProductsRouter.delete('/:id', async (req, res) => {
     try {
         const {id} = req.params;
         const deletedProd = await productManager.deleteProduct(id);
@@ -85,4 +85,4 @@ prodsRouter.delete('/:id', async (req, res) => {
 
 
 
-export default prodsRouter;
+export default localProductsRouter;

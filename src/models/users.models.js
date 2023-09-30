@@ -3,14 +3,14 @@ import paginate from 'mongoose-paginate-v2';
 
 
 const userSchema = new Schema({
-    name: {
+    first_name: {
         type: String,
         required: true
     },
-    surname: {
+    last_name: {
         type: String,
         required: true,
-        // index : true
+        index : true
     },
     age : {
         type: Number,
@@ -24,6 +24,10 @@ const userSchema = new Schema({
     password : {
         type: String,
         required: true
+    },
+    rol:{
+        type: String,
+        default:'user'
     }
 
 })

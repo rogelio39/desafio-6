@@ -14,27 +14,33 @@ import { engine } from "express-handlebars";
 
 
 import { ProductsManager } from "./controllers/productsManager.js";
-import { Products } from "./models/localProducts.models.js";
+import { Products } from './models/localProducts.models.js';
 
 const productManager = new ProductsManager();
+
 
 import { messageModel } from "./models/messages.models.js";
 
 
 //rutas productos
-import prodsRouter from "./routes/localProducts.routes.js";
+import localProductsRouter from './routes/localProducts.routes.js';
+import productRouter from './routes/products.routes.js';
 
-//rutas cart
-import cartRouter from "./routes/localCart.routes.js";
-import userRouter from "./routes/users.routes.js";
-import productRouter from "./routes/products.routes.js";
-import cartModelsRouter from "./routes/cart.routes.js";
+//rutas carts
+import localCartRouter from './routes/localCart.routes.js';
+import cartRouter from './routes/cart.routes.js';
+
+//rutas user
+import userRouter from './routes/users.routes.js';
+
+//sessions routes
+import sessionRouter from "./routes/session.routes.js";
+
 
 //models
 
-import { userModel } from "./models/users.models.js";
 
-const PORT = 4000;
+const PORT = 8080;
 
 const app = express();
 
@@ -43,15 +49,6 @@ const app = express();
 //variable para enviar userEmail por socket.
 let userEmail;
 
-//verifico si un usuario es admin o no.
-
-const auth = (req, res, next) => {
-    if(req.session.email == 'admin@admin.com' && req.session.password == '1234'){
-        return next(); //continua con la siguiente ejecucion
-    } else {
-        res.send('no tienes acceso a esta ruta');
-    }
-}
 
 //config multer
 const storage = multer.diskStorage({
@@ -63,37 +60,26 @@ const storage = multer.diskStorage({
     }
 });
 
-
-//SERVER
 const server = app.listen(PORT, () => {
     console.log(`server on port ${PORT}`);
 });
 
 
-//BDD: conectando mongoDB atlas con visual studio code.
-mongoose.connect(process.env.MONGO_URL)
-.then( async () => {
-    console.log('DB is connected');
-    
-}).catch(() => console.log('error en conexion a DB'));
-
-//Middleware
-
 app.use(express.json());
-app.use(cookieParser(process.env.SIGNED_COOKIE));
+app.use(cookieParser(process.env.SIGNED_COOKIE)) // La cookie esta firmada
 app.use(session({
     store: MongoStore.create({
         mongoUrl: process.env.MONGO_URL,
         mongoOptions: {
-            useNewUrlParser:true, useUnifiedTopology:true
+            useNewUrlParser: true, //Establezco que la conexion sea mediante URL
+            useUnifiedTopology: true //Manego de clusters de manera dinamica
         },
-        ttl:60
+        ttl: 60 //Duracion de la sesion en la BDD en segundos
+
     }),
     secret: process.env.SESSION_SECRET,
-    //fuerzo a que se intente guardar a pesar de no tener modificaciones en los datos
-    resave: true,
-    //fuerzo a guardar la session a pesar de no tener ningun dato, al menos el id
-    saveUninitialized: true
+    resave: false, //Fuerzo a que se intente guardar a pesar de no tener modificacion en los datos
+    saveUninitialized: false //Fuerzo a guardar la session a pesar de no tener ningun dato
 }))
 app.use(express.urlencoded({ extended: true }));
 
@@ -105,6 +91,13 @@ const upload = multer({ storage: storage });
 
 //aqui se deben concatenar las rutas.
 app.use('/static', express.static(path.join(__dirname, '/public')));
+
+//conectando mongoDB atlas con visual studio code.
+mongoose.connect(process.env.MONGO_URL)
+.then( async () => {
+    console.log('DB is connected');
+
+}).catch(() => console.log('error en conexion a DB'));
 
 
 //server socket.io
@@ -149,42 +142,24 @@ io.on('connection', async (socket) => {
 
 
 //routes productos
-app.use('/api/products', prodsRouter);
+app.use('/api/localProducts', localProductsRouter);
 
 //routes cart
-app.use('/api/carts', cartRouter);
+app.use('/api/localCarts', localCartRouter);
 
 //routes users 
 app.use('/api/users', userRouter);
 
 //routes products con mongo
-app.use('/api/prods', productRouter);
+app.use('/api/products', productRouter);
 
 //routes carts con mongo
-app.use('/api/cartsModels', cartModelsRouter);
+app.use('/api/carts', cartRouter);
 
-//routes de cookies
-app.get('/setCookie', (req, res) => {
-    res.cookie('CookieCookie', 'Hola mundo', {maxAge: 50000, signed: true}).send('cookie generada');
-});
-
-app.get('/getCookie', (req, res) => {
-    res.send(req.signedCookies); //traeme solamente las cookies firmadas
-})
+//routes de session
+app.use('/api/sessions', sessionRouter);
 
 
-//routes de loggin
-
-app.get('/login', (req, res) => {
-    const {email, password} = req.body;
-    req.session.email = email;
-    req.session.password = password;
-
-    res.send(`Usuario ${email} logueado`);
-})
-
-
-//ruta para mostrar views de handblebars
 app.get('/static', async (req, res) => {
 
     const messages = JSON.stringify(await messageModel.find(), null, 4);
@@ -195,7 +170,7 @@ app.get('/static', async (req, res) => {
         js: 'main.js',
         user: userEmail,
         messagesView: messages
-    }) 
+    })
 })
 
 
@@ -203,3 +178,6 @@ app.get('/static', async (req, res) => {
 app.post('/upload', upload.single('product'), (req, res) => {
     res.status(200).send('imagen cargada');
 })
+
+
+
