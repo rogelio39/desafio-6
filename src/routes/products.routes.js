@@ -4,8 +4,6 @@ import {productModel} from "../models/products.models.js";
 const productRouter = Router();
 
 
-
-
 productRouter.get('/', async (req, res) => {
     const { category, status, limit, page, sort } = req.query;
     //objeto para manejar las opciones ingresadas por parametros

@@ -94,10 +94,10 @@ app.use('/static', express.static(path.join(__dirname, '/public')));
 
 //conectando mongoDB atlas con visual studio code.
 mongoose.connect(process.env.MONGO_URL)
-.then( async () => {
-    console.log('DB is connected');
+    .then(async () => {
+        console.log('DB is connected');
 
-}).catch(() => console.log('error en conexion a DB'));
+    }).catch(() => console.log('error en conexion a DB'));
 
 
 //server socket.io
@@ -106,9 +106,22 @@ const io = new Server(server);
 io.on('connection', async (socket) => {
     console.log('servidor Socket.io connected');
 
+    //productos en tiempo real
+
     //se consulta los productos existentes
     const productos = await productManager.getProducts();
     socket.emit('prods', productos);
+
+    socket.on('nuevoProducto', async (nuevoProd) => {
+        const { title, description, price, code, stock, category } = nuevoProd;
+        const newProduct = new Products(title, description, price, code, true, stock, category, []);
+        productManager.addProduct(newProduct);
+        socket.emit('prod', newProduct);
+    });
+
+
+
+    //chat handlebars
 
     // Consulta los mensajes existentes en la base de datos
     try {
@@ -118,7 +131,6 @@ io.on('connection', async (socket) => {
         console.log('Error al consultar mensajes:', error);
     }
 
-    
     socket.on('message', async (messageInfo) => {
         const { email, message } = messageInfo;
         try {
@@ -131,12 +143,6 @@ io.on('connection', async (socket) => {
         }
     })
 
-    socket.on('nuevoProducto', async (nuevoProd) => {
-        const { title, description, price, code, stock, category } = nuevoProd;
-        const newProduct = new Products(title, description, price, code, true, stock, category, []);
-        productManager.addProduct(newProduct);
-        socket.emit('prod', newProduct);
-    });
 })
 
 
@@ -162,14 +168,11 @@ app.use('/api/sessions', sessionRouter);
 
 app.get('/static', async (req, res) => {
 
-    const messages = JSON.stringify(await messageModel.find(), null, 4);
+    res.render('login', {
+        css: "login.css",
+        title: "login",
+        js: 'login.js'
 
-    res.render('chat', {
-        css: "chat.css",
-        title: "chat",
-        js: 'main.js',
-        user: userEmail,
-        messagesView: messages
     })
 })
 
@@ -179,5 +182,5 @@ app.post('/upload', upload.single('product'), (req, res) => {
     res.status(200).send('imagen cargada');
 })
 
-
+// 
 
