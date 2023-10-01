@@ -1,4 +1,3 @@
-const socket = io();
 const form = document.getElementById('idForm');
 const userContainer = document.getElementById('userContainer');
 const errorContainer = document.getElementById('errorContainer');
@@ -20,11 +19,8 @@ form.addEventListener('submit', async (e) => {
         if (response.status === 200) {
             // Redirigir al usuario después del inicio de sesión
             window.location.href = '/api/products';
-        } else if(response.status === 400 || response.status === 404) {
+        } else {
             errorContainer.innerHTML= "<p>Error en alguno de los datos ingresados</p>"
-        }else {
-            // Mostrar mensajes de error al usuario
-            console.error(data.respuesta);
         }
     } catch (error) {
         console.error('Error en la solicitud:', error);

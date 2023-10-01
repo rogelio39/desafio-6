@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {productModel} from "../models/products.models.js";
 
+
 const productRouter = Router();
 
 
@@ -30,8 +31,8 @@ productRouter.get('/', async (req, res) => {
     options.query = query;
 
     try {
-        const prods = await productModel.paginate(options.query, { limit: limit ?? 10, page: page ?? 1, sort: options.sort });
-        res.status(200).send({ respuesta: 'ok', message: prods });
+        const respuesta = await productModel.paginate(options.query, { limit: limit ?? 10, page: page ?? 1, sort: options.sort });
+        res.status(200).send({ respuesta: 'ok', message: respuesta.docs});
     } catch (error) {
         res.status(400).send({ respuesta: "error en consultar productos", mensaje: error });
     }

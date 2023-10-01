@@ -4,46 +4,42 @@ import { userModel } from "../models/users.models.js";
 const sessionRouter = Router();
 
 sessionRouter.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    const {email, password} = req.body;
 
-    try {
-        if (req.session.login) {
-            res.redirect('/api/products');
-        } else {
-            const user = await userModel.findOne({ email: email });
-            if (user) {
-                if (user.password === password) {
+    try{
+        if(req.session.login){
+            res.status(200).send({resultado : 'login ya existente'});
+        } 
+        const user = await userModel.findOne({email: email});
+            if(user){
+                if(user.password == password){
                     req.session.login = true;
-                    // Redirigir al usuario después del inicio de sesión
-                    res.redirect('/api/products', 200, {info: 'user'});
+                    res.redirect('/api/products', 200, {info:'user'});
                 } else {
-                    // Contraseña incorrecta
-                    res.status(400).send({ respuesta: 'invalid password' });
+                    res.status(401).send({respuesta: 'invalid password', message: password});
                 }
-            } else {
-                // Usuario no encontrado
-                res.status(404).send({ respuesta: 'not found' });
+            }else {
+                res.status(404).send({respuesta: 'not found', mensaje: user})
             }
-        }
-    } catch (error) {
-        console.error('Error en login:', error);
-        res.status(500).send({ error: `error en login ${error}` });
+        } catch(error){
+        res.status(400).send({error:`error en login ${error}`});
     }
 });
+
 
 sessionRouter.get('/logout', async (req, res) => {
-    try {
-        if (req.session.login) {
+    try{
+        if(req.session.login){
             req.session.destroy();
-            res.redirect('/api/sessions/login');
-        } else {
-            // Si el usuario ya está deslogueado, redirigir a la página de inicio de sesión
-            res.redirect('/api/sessions/login');
+            res.redirect('/api/sessions/login',200, {resultado: 'Usuario deslogueado'})
         }
-    } catch (error) {
-        console.error('Error en logout:', error);
-        res.status(500).send({ error: `error en logout ${error}` });
+        } catch(error){
+        res.status(400).send({error:`error en logout ${error}`});
     }
 });
+
+
+
+
 
 export default sessionRouter;

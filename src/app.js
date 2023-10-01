@@ -18,8 +18,9 @@ import { Products } from './models/localProducts.models.js';
 
 const productManager = new ProductsManager();
 
-
+//models
 import { messageModel } from "./models/messages.models.js";
+import { productModel } from './models/products.models.js';
 
 
 //rutas productos
@@ -92,6 +93,7 @@ const upload = multer({ storage: storage });
 //aqui se deben concatenar las rutas.
 app.use('/static', express.static(path.join(__dirname, '/public')));
 
+
 //conectando mongoDB atlas con visual studio code.
 mongoose.connect(process.env.MONGO_URL)
     .then(async () => {
@@ -159,12 +161,24 @@ app.use('/api/users', userRouter);
 //routes products con mongo
 app.use('/api/products', productRouter);
 
+
 //routes carts con mongo
 app.use('/api/carts', cartRouter);
 
 //routes de session
 app.use('/api/sessions', sessionRouter);
 
+app.get('/static/productos', async(req, res) => {
+
+    const prod = await productModel.paginate({});
+    const productos = JSON.stringify(prod.docs, null, 2);
+    console.log(productos)
+    res.render('products', {
+        css: 'products.css',
+        js: 'products.js',
+        products : productos
+    })
+})
 
 app.get('/static', async (req, res) => {
 
@@ -174,7 +188,9 @@ app.get('/static', async (req, res) => {
         js: 'login.js'
 
     })
-})
+});
+
+
 
 
 //este es el endpoint en el que me voy a conectar a mi aplicacion
@@ -182,5 +198,4 @@ app.post('/upload', upload.single('product'), (req, res) => {
     res.status(200).send('imagen cargada');
 })
 
-// 
 

@@ -1,18 +1,17 @@
 const logout = document.getElementById('logout');
 
 
-
-logout.addEventListener('submit', async(e) => {
-    e.preventDefault();
-
+logout.addEventListener('click', async() => {
     try{
-        const response = await fetch('/static', {
+        const response = await fetch('/api/sessions/logout', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             }
-        }).then(response.json())
-        .then(data => console.log(data))
+        })
+        if(response.status === 200){
+            window.location.href = '/static';
+        }
 
     }catch(error){
         console.log('error', error);
