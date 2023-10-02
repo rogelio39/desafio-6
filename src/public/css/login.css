@@ -24,12 +24,7 @@
     border-radius: 10px;
 }
 
-#email{
-    width: 40vw;
-    margin: auto;
-}
-
-#password{
+#email,#first_name, #password, #last_name{
     width: 40vw;
     margin: auto;
 }

@@ -4,7 +4,7 @@ import { userModel } from "../models/users.models.js";
 const sessionRouter = Router();
 
 sessionRouter.post('/login', async (req, res) => {
-    const {email, password} = req.body;
+    const {email, password, name, lastName} = req.body;
 
     try{
         if(req.session.login){
@@ -14,7 +14,10 @@ sessionRouter.post('/login', async (req, res) => {
             if(user){
                 if(user.password == password){
                     req.session.login = true;
-                    res.redirect('/api/products', 200, {info:'user'});
+                    req.session.name = name;
+                    req.session.lastName = lastName;
+
+                    res.redirect(200,`/static/products`);
                 } else {
                     res.status(401).send({respuesta: 'invalid password', message: password});
                 }
@@ -22,7 +25,7 @@ sessionRouter.post('/login', async (req, res) => {
                 res.status(404).send({respuesta: 'not found', mensaje: user})
             }
         } catch(error){
-        res.status(400).send({error:`error en login ${error}`});
+        console.log(error);
     }
 });
 
@@ -31,7 +34,7 @@ sessionRouter.get('/logout', async (req, res) => {
     try{
         if(req.session.login){
             req.session.destroy();
-            res.redirect('/api/sessions/login',200, {resultado: 'Usuario deslogueado'})
+            res.redirect(200,'/static')
         }
         } catch(error){
         res.status(400).send({error:`error en logout ${error}`});

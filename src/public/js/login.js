@@ -7,18 +7,19 @@ form.addEventListener('submit', async (e) => {
     const formData = new FormData(e.target);
     const email = formData.get('email');
     const password = formData.get('password');
+    const name = formData.get('first_name');
+    const lastName = formData.get('last_name');
     try {
         const response = await fetch('/api/sessions/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password, name, lastName})
         });
-        const data = await response.json();
         if (response.status === 200) {
             // Redirigir al usuario después del inicio de sesión
-            window.location.href = '/api/products';
+            window.location.href = '/static/products';
         } else {
             errorContainer.innerHTML= "<p>Error en alguno de los datos ingresados</p>"
         }

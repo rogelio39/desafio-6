@@ -168,17 +168,42 @@ app.use('/api/carts', cartRouter);
 //routes de session
 app.use('/api/sessions', sessionRouter);
 
-app.get('/static/productos', async(req, res) => {
 
-    const prod = await productModel.paginate({});
-    const productos = JSON.stringify(prod.docs, null, 2);
-    console.log(productos)
-    res.render('products', {
-        css: 'products.css',
-        js: 'products.js',
-        products : productos
-    })
+app.get('/static/products', async(req, res) => {
+
+    const name = req.session.name;
+    const lastName = req.session.lastName;
+
+    try{
+        const products = await productModel.paginate({});
+        const productsJSON = products.docs.map(producto => {
+            return {
+                _id: producto._id.toString(),
+                title: producto.title,
+                description: producto.description,
+                price: producto.price,
+                stock: producto.stock,
+            };
+        });
+
+        if(req.session.login){
+            res.render('products', {
+                css: 'products.css',
+                js: 'products.js',
+                products : productsJSON,
+                name: name,
+                lastName : lastName
+            }) 
+        } else {
+            res.render('accessDenied'); 
+        }
+
+    }catch(error) {
+        console.log(error);
+    }
+
 })
+
 
 app.get('/static', async (req, res) => {
 
