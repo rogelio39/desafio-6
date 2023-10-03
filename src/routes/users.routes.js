@@ -35,9 +35,14 @@ userRouter.get('/:id', async (req, res) => {
 userRouter.post('/', async (req, res) => {
     const { first_name, last_name, age, email, password } = req.body;
     try {
-        const respuesta = await userModel.create({first_name, last_name, age, email, password});
-        res.status(200).send({ respuesta: 'ok', mensaje: respuesta });
-        
+        const respuesta = await userModel.create({ first_name, last_name, age, email, password });
+        console.log(respuesta);
+        req.session.name = first_name;
+        req.session.lastName = last_name;
+        if (respuesta) {
+            req.session.login = true;
+            res.redirect(200, `/static/products`);
+        }
     } catch (error) {
         res.status(400).send({ respuesta: "error", mensaje: error });
     }
@@ -45,16 +50,16 @@ userRouter.post('/', async (req, res) => {
 
 
 userRouter.put('/:id', async (req, res) => {
-    const {id} = req.params;
-    const { first_name, last_name, age, email, password} = req.body;
+    const { id } = req.params;
+    const { first_name, last_name, age, email, password } = req.body;
     try {
         const respuesta = await userModel.findByIdAndUpdate(id, { first_name, last_name, age, email, password });
-        if(respuesta){
+        if (respuesta) {
             res.status(200).send({ respuesta: 'ok', mensaje: respuesta });
         } else {
-            res.status(404).send({respuesta: 'error', mensaje: 'producto no encontrado'});
+            res.status(404).send({ respuesta: 'error', mensaje: 'producto no encontrado' });
         }
-        
+
     } catch (error) {
         res.status(400).send({ respuesta: "error", mensaje: error });
     }
@@ -62,9 +67,9 @@ userRouter.put('/:id', async (req, res) => {
 
 userRouter.delete('/:id', async (req, res) => {
     try {
-        const {id} = req.params
+        const { id } = req.params
         const user = await userModel.findByIdAndDelete(id);
-        if(user) {
+        if (user) {
             res.status(200).send({ respuesta: 'ok', mensaje: 'usuario borrado' });
         } else {
             res.status(404).send({ respuesta: 'error', mensaje: 'usuario no encontado, error al eliminar' });
