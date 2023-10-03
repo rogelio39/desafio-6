@@ -36,7 +36,6 @@ userRouter.post('/', async (req, res) => {
     const { first_name, last_name, age, email, password } = req.body;
     try {
         const respuesta = await userModel.create({ first_name, last_name, age, email, password });
-        console.log(respuesta);
         req.session.name = first_name;
         req.session.lastName = last_name;
         if (respuesta) {
